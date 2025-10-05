@@ -1,17 +1,17 @@
-cat > Jenkinsfile <<'EOF'
 pipeline {
   agent any
   environment {
-    AWS_DEFAULT_REGION = 'us-east-1'
+    AWS_DEFAULT_REGION = 'us-east-1'   // change if your region is different
     REPO_NAME = 'hello-devops'
   }
+  options { timestamps() }
 
   stages {
     stage('Checkout') {
       steps { checkout scm }
     }
 
-    stage('Unit tests') {
+    stage('Unit tests (Python in Docker)') {
       steps {
         sh '''
           docker run --rm \
@@ -38,13 +38,12 @@ pipeline {
       }
     }
 
-    stage('Build & Push Docker Image') {
+    stage('Build & Push Image') {
       steps {
         sh '''
           ACCOUNT_ID=$(cat account_id.txt)
           REPO=${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}
           GIT_SHA=$(git rev-parse --short=12 HEAD)
-
           docker build -t ${REPO}:${GIT_SHA} -t ${REPO}:latest .
           docker push ${REPO}:${GIT_SHA}
           docker push ${REPO}:latest
@@ -57,7 +56,6 @@ pipeline {
         sh '''
           ACCOUNT_ID=$(cat account_id.txt)
           REPO=${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}
-
           docker pull ${REPO}:latest
           docker rm -f app || true
           docker run -d --name app --restart unless-stopped -p 80:5000 ${REPO}:latest
@@ -66,4 +64,3 @@ pipeline {
     }
   }
 }
-EOF
