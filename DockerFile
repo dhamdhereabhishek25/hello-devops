@@ -1,0 +1,16 @@
+# 1) Use a small Python base
+FROM python:3.12-slim
+
+# 2) Set workdir
+WORKDIR /app
+
+# 3) Install deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 4) Copy source
+COPY . .
+
+# 5) Expose port and run
+EXPOSE 5000
+CMD ["python", "app.py"]
